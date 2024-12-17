@@ -44,7 +44,7 @@ The general flow of the project is as follows:
 ## **Logical Flow Diagram**
 This figure illustrates the high-level logical flow of the fall detection system:
 
-![Logical Flow Diagram](path/to/logical_flow_diagram.png)  
+![Logical Flow Diagram](images/CTS_logical_flow_diagram.jpg)  
 *Figure 1: Logical flow showing YOLOv8 detection, ST-GCN classification, and notification.*
 
 ---
@@ -52,7 +52,7 @@ This figure illustrates the high-level logical flow of the fall detection system
 ## **Detailed Flow Diagram**
 This figure shows the complete system pipeline in detail:
 
-![Detailed Flow Diagram](path/to/detailed_flow_diagram.png)  
+![Detailed Flow Diagram](images/CTS_functional_flow_diagram.jpg)  
 *Figure 2: Detailed flow diagram depicting key components like YOLOv8, MediaPipe, ST-GCN, and Twilio integration.*
 
 ---
