@@ -40,12 +40,12 @@ This project implements a fall detection system using **MediaPipe Pose** for key
 ### 1. Training Phase Flowchart
 The training phase involves processing labeled frame data, extracting keypoints, and training the STGCN model to detect falls. Below is the flowchart for the training phase:
 
-![Training Phase Flowchart](images/training_phase.jpeg)
+![Training Phase Flowchart](images/training.jpeg)
 
 ### 2. Prediction Phase Flowchart
 Once the model is trained, it can be used to predict falls in new video data. The prediction phase involves video frame processing, keypoint extraction, and using the trained model for classification. Below is the flowchart for the prediction phase:
 
-![Prediction Phase Flowchart](images/prediction_phase.jpeg)
+![Prediction Phase Flowchart](images/prediction.jpeg)
 
 ---
 
