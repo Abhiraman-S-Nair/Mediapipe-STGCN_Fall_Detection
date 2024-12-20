@@ -1,73 +1,53 @@
-# **Fall Detection System Using YOLOv8 and ST-GCN**
+# **Fall Detection System Using MediaPipe and ST-GCN**
 
 ## **Project Overview**
-This project implements a fall detection system that combines **YOLOv8** for object detection and **ST-GCN (Spatio-Temporal Graph Convolutional Network)** for analyzing human pose keypoints. The system detects falls in videos and sends notifications to caregivers using Twilio while uploading fall-detected frames to Google Drive.
+This project implements a fall detection system using **MediaPipe Pose** for keypoint extraction and **ST-GCN (Spatio-Temporal Graph Convolutional Network)** for analyzing human pose keypoints. The system detects falls in videos and sends notifications to caregivers using Twilio while uploading fall-detected frames to Google Drive.
 
 ---
 
 ## **Technologies Used**
 
-1. **YOLOv8**: Object detection to identify persons and crop frames containing them.
-2. **MediaPipe**: Pose estimation for extracting 33 keypoints per frame.
-3. **ST-GCN**: Spatio-Temporal Graph Convolutional Network for classifying frames as:
-   - **Fallen**
-   - **Not Fallen**
-4. **Twilio API**: Sends WhatsApp notifications with fall alerts and Google Drive links.
-5. **Google Drive API**: Uploads fall-detected frames for easy access.
-6. **Python**: Main programming language for development.
-7. **Google Colab**: Used for model training, testing, and deployment.
+1. **MediaPipe**: Extracts 33 pose keypoints per frame for fall detection.
+2. **ST-GCN**: Spatio-Temporal Graph Convolutional Network for classifying frames as:
+   - **Falling**
+   - **Not Falling**
+3. **Twilio API**: Sends SMS notifications with fall alerts and Google Drive links.
+4. **Google Drive API**: Uploads fall-detected frames for easy access.
+5. **Python**: Main programming language for development.
+6. **Google Colab**: Used for model training, testing, and deployment.
+
+---
+
+Here’s the updated **Pipeline** section with details about the fallback to MediaPipe and the sliding window mechanism:
 
 ---
 
 ## **Pipeline**
 
-The general flow of the project is as follows:
-
 1. **Input Video**: User uploads a video for analysis.
-2. **YOLOv8 Phase**:
-   - Detects persons and extracts bounding boxes from video frames.
-   - Crops and stores the bounding box regions in the **`cropped_frames`** folder.
-3. **Pose Extraction**:
-   - Extracts 33 keypoints from the cropped frames using **MediaPipe Pose**.
-4. **ST-GCN Model**:
-   - Trained on keypoints and labels (`fallen`/`not fallen`).
-   - Classifies frames using extracted keypoints.
-   - Generates:
-     - **Per-frame Results**: Labels for each frame.
-     - **Overall Result**: Video classification based on frame results.
-5. **Twilio Integration**:
+2. **Pose Extraction**:
+   - **ST-GCN Phase**: Uses the trained **ST-GCN model** to classify video frames as:
+     - **Falling**
+     - **Not Falling**
+   - **Fallback to MediaPipe**: If ST-GCN detects a fall or encounters errors, MediaPipe is used to extract pose keypoints for further analysis.
+3. **Sliding Window Logic**:
+   - Applies a sliding window of 100 frames to validate fall detection.
+   - If a transition from **Sitting** or **Standing** to **Lying** is detected within the window, the video is classified as **Fall Detected**; otherwise, **No Fall Detected**.
+4. **Twilio Integration**:
    - Sends alerts if a fall is detected.
    - Uploads the detected fall frame to Google Drive and provides a shareable link.
 
 ---
 
-## **Logical Flow Diagram**
-This figure illustrates the high-level logical flow of the fall detection system:
+## **Functions Used**
 
-![Logical Flow Diagram](images/CTS_logical_flow_diagram.jpg)  
-*Figure 1: Logical flow showing YOLOv8 detection, ST-GCN classification, and notification.*
+### **Key Features**
+- **Keypoint Extraction**: Extracts and normalizes pose landmarks using MediaPipe.
+- **ST-GCN Training**: Trains the model on labeled pose keypoints to classify falls.
+- **Sliding Window Logic**: Validates fall detection over time.
+- **Notification System**: Sends SMS with Google Drive links to caregivers when a fall is detected.
 
----
-
-## **Detailed Flow Diagram**
-This figure shows the complete system pipeline in detail:
-
-![Detailed Flow Diagram](images/CTS_functional_flow_diagram.jpg)  
-*Figure 2: Detailed flow diagram depicting key components like YOLOv8, MediaPipe, ST-GCN, and Twilio integration.*
-
----
-
-## **Figures and Outputs**
-1. **Logical Flow Diagram**: Highlights the overall structure of the project.
-2. **Detailed Flow Diagram**: Describes the data flow through all components.
-3. **Output Results**:
-   - Example per-frame classification:  
-     ```
-     Frame 1: Not Fallen
-     Frame 50: Fallen
-     Frame 100: Fallen
-     ```
-   - Overall Result: **Fall Detected**
+Refer to the [codebase file](Fall Detection using Mediapipe+STGCN.md) for details on functions and their usage.
 
 ---
 
@@ -90,26 +70,38 @@ This figure shows the complete system pipeline in detail:
 
 2. Install required libraries:
    ```bash
-   pip install torch torchvision ultralytics mediapipe opencv-python twilio google-api-python-client
+   pip install torch torchvision mediapipe opencv-python twilio numpy
    ```
 
-3. Run the code in Colab:
-   - Upload video files.
-   - Use the **`predict_fall_in_video`** function to analyze videos.
-
-4. Example Command:
+3. Mount Google Drive (for Colab users):
    ```python
-   results = predict_fall_in_video('/content/test_video.mp4', model, device, pose_extractor)
+   from google.colab import drive
+   drive.mount('/content/drive')
+   ```
+
+4. Example Execution:
+   ```python
+   from google.colab import files
+   uploaded = files.upload()
+   video_path = list(uploaded.keys())[0]
+   results = predict_with_fallback(video_path, model, device)
    print(results['Overall Result'])
    ```
 
 ---
 
-## **Contributors**
-- **[Your Name]**: Model Development, Integration  
-- **[Team Member Name]**: Data Processing, Pipeline Development  
-- **[Team Member Name]**: Twilio Integration, Cloud Setup  
-
+### **Contributors**
+- **Abhiraman S Nair**: Integration, Code Optimization, and Model Implementation  
+- **Anandhu**: Twilio Integration R&D  
+- **Anns George**: ST-GCN Model R&D  
+- **Chinnu Abbey**: ST-GCN Model R&D  
+- **Hanna Elza John**: Twilio Integration R&D  
+- **Kevin C Mathews**: MediaPipe R&D  
+- **Krishnapriya C**: ST-GCN Model R&D  
+- **Navaneeth C P**: MediaPipe R&D  
+- **Nidhin Biju**: MediaPipe R&D  
+- **Sivani Binu**: Twilio Integration R&D
+  
 ---
 
 ## **License**
