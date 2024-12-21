@@ -658,6 +658,9 @@ print("Annotated Video Saved at:", results["Video Path"])
 
 #### Output
 ```
+No file chosen Upload widget is only available when the cell has been executed in the current browser session. Please rerun this cell to enable.
+Saving falling_007.mp4 to falling_007.mp4
+
 Processing video with STGCN and MediaPipe fallback: falling_007.mp4
 Downloading model to /usr/local/lib/python3.10/dist-packages/mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite
 STGCN prediction error: too many indices for array: array is 1-dimensional, but 2 were indexed. Falling back to MediaPipe.
@@ -690,6 +693,9 @@ print("Annotated Video Saved at:", results["Video Path"])
 
 #### Output
 ```
+No file chosen Upload widget is only available when the cell has been executed in the current browser session. Please rerun this cell to enable.
+Saving standing_004.mp4 to standing_004.mp4
+
 Processing video with STGCN and MediaPipe fallback: standing_004.mp4
 Downloading model to /usr/local/lib/python3.10/dist-packages/mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite
 STGCN prediction error: too many indices for array: array is 1-dimensional, but 2 were indexed. Falling back to MediaPipe.
