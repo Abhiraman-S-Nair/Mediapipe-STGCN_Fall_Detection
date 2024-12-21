@@ -637,7 +637,7 @@ STGCN(
 ```
 
 ### Fall Case
-```
+```python
 # =============================
 # Main Script
 # =============================
@@ -657,11 +657,7 @@ print("Annotated Video Saved at:", results["Video Path"])
 ```
 
 #### Output
-
-### Fall Detected Case
 ```
-
-
 Processing video with STGCN and MediaPipe fallback: falling_007.mp4
 Downloading model to /usr/local/lib/python3.10/dist-packages/mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite
 STGCN prediction error: too many indices for array: array is 1-dimensional, but 2 were indexed. Falling back to MediaPipe.
@@ -672,24 +668,28 @@ Overall Fall Detection Result: Fall Detected
 Annotated Video Saved at: output_annotated.mp4
 ```
 
-### No Fall Detected Case
-```
-<ipython-input-12-35318ab01d7f>:8: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
-  model.load_state_dict(torch.load(model_path, map_location=device), strict=False)
-STGCN(
-  (stgcn1): STGCNLayer(
-    (spatial_conv): Conv2d(1, 64, kernel_size=(1, 33), stride=(1, 1), padding=(0, 16))
-    (temporal_conv): Conv2d(64, 64, kernel_size=(3, 1), stride=(1, 1), padding=(1, 1))
-    (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-  )
-  (stgcn2): STGCNLayer(
-    (spatial_conv): Conv2d(64, 64, kernel_size=(1, 33), stride=(1, 1), padding=(0, 16))
-    (temporal_conv): Conv2d(64, 64, kernel_size=(3, 1), stride=(1, 1), padding=(1, 1))
-    (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-  )
-  (fc): Linear(in_features=64, out_features=2, bias=True)
-)
+### No Fall Case
+```python
+# =============================
+# Main Script
+# =============================
+from google.colab import files
+# Paths
+# Upload video
+uploaded = files.upload()
+video_path = list(uploaded.keys())[0]
 
+# Process the video and predict falls
+no_fall_results = predict_with_fallback(video_path, model, device)
+
+# Display the results
+print("Frame-by-Frame Pose Results:", results["Frame Results"])
+print("Overall Fall Detection Result:", results["Overall Result"])
+print("Annotated Video Saved at:", results["Video Path"])
+```
+
+#### Output
+```
 Processing video with STGCN and MediaPipe fallback: standing_004.mp4
 Downloading model to /usr/local/lib/python3.10/dist-packages/mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite
 STGCN prediction error: too many indices for array: array is 1-dimensional, but 2 were indexed. Falling back to MediaPipe.
@@ -809,21 +809,24 @@ to_number = "reciver-number"
 
 ## Message Sending using Twilio
 
+### Fall Case
 ```python
+# Data for Alert Generation
+fall_detected_results = fall_results
+fall_video_path = "falling_007.mp4"
+
 # Test Case
 print("Testing Case:")
 send_fall_notification_via_gdrive_simple(
-    results,
-    video_path,
+    fall_results,
+    fall_video_path,
     account_sid,
     auth_token,
     from_number,
     to_number
 ```
 
-## Output
-
-### Fall Detected Case
+#### Output
 ```
 Testing Case:
 Frame saved to: /content/drive/MyDrive/Fall_Detection_Alerts/fallen_frame.jpg
@@ -831,7 +834,24 @@ Manual location: MyDrive/Fall_Detection_Alerts/fallen_frame.jpg
 Fall alert sent via SMS: SID SMded3abc107a3bb46d069cc2bcd76c79a
 ```
 
-### No Fall Detected Case
+### No Fall Case
+
+```python
+#Data For Alert Generation
+no_fall_detected_results = no_fall_results
+no_fall_video_path = "standing_004.mp4"
+
+# Test Case
+print("Testing Case:")
+send_fall_notification_via_gdrive_simple(
+    no_fall_results,
+    no_fall_video_path,
+    account_sid,
+    auth_token,
+    from_number,
+    to_number
+```
+
 ```
 Testing No Fall Detected Case:
 No fall detected notification sent: SID SMe075e2713e7d395a80a12a61d4e84e79
