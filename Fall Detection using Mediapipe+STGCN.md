@@ -805,3 +805,11 @@ Fall alert sent via SMS: SID SMded3abc107a3bb46d069cc2bcd76c79a
 Testing No Fall Detected Case:
 No fall detected notification sent: SID SMe075e2713e7d395a80a12a61d4e84e79
 ```
+
+### Alerts Received
+
+![Alerts Received from Twilio via WhatsApp](images/twilio.jpeg)
+
+### 
+
+
