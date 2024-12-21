@@ -111,7 +111,3 @@ Refer to the [codebase file](Fall Detection using Mediapipe+STGCN.md) for detail
 - **Nidhin Biju**: MediaPipe R&D  
 - **Sivani Binu**: Twilio Integration R&D
   
----
-
-## **License**
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
