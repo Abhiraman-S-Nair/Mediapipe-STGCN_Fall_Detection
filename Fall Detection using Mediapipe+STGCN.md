@@ -397,7 +397,12 @@ Validation Accuracy: 82.56%
 import torch
 import numpy as np
 import cv2
+import math
 from mediapipe import solutions as mp_solutions
+
+# Initialize MediaPipe Pose
+mp_pose = mp.solutions.pose
+pose_model = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
 # ==============================
 # Helper Functions for STGCN
@@ -409,7 +414,7 @@ def preprocess_for_stgcn(keypoints):
 
     Args:
         keypoints (list or numpy.ndarray): Keypoints as a list or array of (x, y) coordinates.
-    
+
     Returns:
         numpy.ndarray: Preprocessed keypoints with shape [C, T, V].
     """
@@ -429,7 +434,7 @@ def extract_pose_keypoints(frame):
 
     Args:
         frame (numpy.ndarray): A single video frame.
-    
+
     Returns:
         list or None: Keypoints if pose landmarks are detected, otherwise None.
     """
@@ -447,42 +452,57 @@ def classify_pose(landmarks):
 
     Args:
         landmarks (list): Pose keypoints as landmarks from MediaPipe.
-    
+
     Returns:
         tuple: Pose classification as a string and the torso angle as a float.
     """
-    # Calculate torso angle as an example
-    left_shoulder = landmarks[mp_solutions.pose.PoseLandmark.LEFT_SHOULDER]
-    right_shoulder = landmarks[mp_solutions.pose.PoseLandmark.RIGHT_SHOULDER]
-    torso_angle = np.arctan2(right_shoulder.y - left_shoulder.y, right_shoulder.x - left_shoulder.x)
+    # Extract head, shoulder, and hip keypoints
+    head = (landmarks[mp_pose.PoseLandmark.NOSE.value].x, landmarks[mp_pose.PoseLandmark.NOSE.value].y)
+    left_shoulder = (landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x, landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y)
+    right_shoulder = (landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y)
+    left_hip = (landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x, landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y)
+    right_hip = (landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y)
 
-    # Classify based on torso angle
-    if torso_angle < -0.5:
-        return "Falling", torso_angle
-    elif torso_angle > 0.5:
-        return "Lying", torso_angle
-    else:
+    # Calculate torso center (midpoint of shoulders and hips)
+    shoulder_center = ((left_shoulder[0] + right_shoulder[0]) / 2, (left_shoulder[1] + right_shoulder[1]) / 2)
+    hip_center = ((left_hip[0] + right_hip[0]) / 2, (left_hip[1] + right_hip[1]) / 2)
+
+    # Calculate the angle between the head and torso-hip center
+    dy = hip_center[1] - head[1]
+    dx = hip_center[0] - head[0]
+    torso_angle = math.atan2(dy, dx)
+
+    if torso_angle > 1:
+        #print(f"Standing detected: Torso angle = {torso_angle:.2f}")
         return "Standing", torso_angle
+    elif torso_angle < 1:
+        #print(f"Lying Down detected: Torso angle = {torso_angle:.2f}")
+        return "Lying Down", torso_angle
+    else:
+        #print(f"Sitting detected: Torso angle = {torso_angle:.2f}")
+        return "Sitting", torso_angle
+
+
 
 # ==============================
 # Sliding Window Logic
 # ==============================
 
+# Function to analyze a window of frames for fall detection
 def process_frame_window(frames, pose_dict):
-    """
-    Analyzes a sliding window of frames to confirm a fall occurrence.
+    transition_found = False
+    for i in range(1, len(frames)):
+        prev_pose = pose_dict.get(i-1, "")
+        curr_pose = pose_dict.get(i, "")
 
-    Args:
-        frames (list): List of video frames in the current window.
-        pose_dict (dict): Dictionary mapping frame indices to pose predictions.
-    
-    Returns:
-        str: "Fall Detected" or "No Fall" based on the analysis.
-    """
-    fall_count = sum(1 for pose in pose_dict.values() if pose == "Falling")
-    if fall_count > len(frames) * 0.5:  # Example threshold: >50% frames indicate fall
-        return "Fall Detected"
-    return "No Fall"
+        # Detect transition from "Sitting" or "Standing" to "Lying Down"
+        #print(f"Frame {i}: Previous pose = {prev_pose}, Current pose = {curr_pose}")
+        if (prev_pose in ["Sitting", "Standing"] and curr_pose == "Lying Down"):
+            print(f"Transition detected from {prev_pose} to {curr_pose} at frame {i}")
+            transition_found = True
+            break
+
+    return 'Fall Detected' if transition_found else 'No Fall Detected'
 
 # ==============================
 # Prediction Function
@@ -497,7 +517,7 @@ def predict_with_fallback(video_path, stgcn_model, device, frame_skip=1):
         stgcn_model (torch.nn.Module): Trained STGCN model for pose classification.
         device (torch.device): Device for PyTorch model inference.
         frame_skip (int): Number of frames to skip between predictions. Default is 1.
-    
+
     Returns:
         dict: Results containing frame-wise predictions, overall result, and output video path.
     """
@@ -507,7 +527,7 @@ def predict_with_fallback(video_path, stgcn_model, device, frame_skip=1):
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     out = cv2.VideoWriter('output_annotated.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
 
-    frame_count, fall_detected = 0, False
+    frame_count, fall_detected, use_fallback = 0, False, False  # `use_fallback` to manage fallback logic
     window_size = 100  # Sliding window size
 
     frames, keypoints_sequence = [], []
@@ -522,32 +542,33 @@ def predict_with_fallback(video_path, stgcn_model, device, frame_skip=1):
 
         if frame_count % frame_skip == 0:
             # STGCN Model Prediction
-            if not fall_detected:
+            if not use_fallback:
                 try:
                     keypoints = extract_pose_keypoints(frame)
                     stgcn_input = preprocess_for_stgcn(keypoints)
-                    
+
                     stgcn_model.eval()
                     stgcn_input = torch.tensor(stgcn_input, dtype=torch.float32).unsqueeze(0).to(device)
                     prediction = stgcn_model(stgcn_input)
                     predicted_class = torch.argmax(prediction, dim=1).item()
-                    
+
                     if predicted_class == 3:  # Assuming "Fallen" is class 3
                         fall_detected = True
-                        print(f"STGCN detected fall at frame {frame_count}. Switching to MediaPipe...")
-                
+                        print(f"STGCN detected fall at frame {frame_count}.")
+                        break
+
                 except Exception as e:
                     print(f"STGCN prediction error: {e}. Falling back to MediaPipe.")
-                    fall_detected = True
+                    use_fallback = True  # Trigger fallback to MediaPipe
 
-            if fall_detected:
+            if use_fallback:
                 landmarks = extract_pose_keypoints(frame)
                 if landmarks:
                     pose, torso_angle = classify_pose(landmarks)
                     pose_dict[frame_count] = pose
                     cv2.putText(frame, f"Pose: {pose}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                     cv2.putText(frame, f"Torso Angle: {torso_angle:.2f}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                    
+
                     frames.append(frame)
                     keypoints = np.array([[lm.x, lm.y, lm.z, lm.visibility] for lm in landmarks])
                     keypoints_sequence.append(keypoints)
@@ -556,6 +577,7 @@ def predict_with_fallback(video_path, stgcn_model, device, frame_skip=1):
                         window_result = process_frame_window(frames, pose_dict)
                         if window_result == 'Fall Detected':
                             print(f"Confirmed fall detected at frame {frame_count} using MediaPipe.")
+                            fall_detected = True  # Confirm the fall based on MediaPipe processing
                             break
                         frames.pop(0)
                         keypoints_sequence.pop(0)
@@ -580,6 +602,7 @@ def predict_with_fallback(video_path, stgcn_model, device, frame_skip=1):
 
 ## Execution
 
+### Setting up the ST-GCN Model
 ```python
 # Initialize your model
 model = STGCN(num_keypoints=33, num_classes=2)  # Assuming 33 keypoints and 2 classes  # Use your actual model class name here
@@ -592,28 +615,9 @@ model.load_state_dict(torch.load(model_path, map_location=device), strict=False)
 
 # Set the model to evaluation mode
 model.eval()
-
-# =============================
-# Main Script
-# =============================
-from google.colab import files
-# Paths
-# Upload video
-uploaded = files.upload()
-video_path = list(uploaded.keys())[0]
-
-# Process the video and predict falls
-results = predict_with_fallback(video_path, model, device)
-
-# Display the results
-print("Frame-by-Frame Pose Results:", results["Frame Results"])
-print("Overall Fall Detection Result:", results["Overall Result"])
-print("Annotated Video Saved at:", results["Video Path"])
 ```
 
-## Output
-
-### Fall Detected Case
+#### Output
 ```
 <ipython-input-12-35318ab01d7f>:8: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
   model.load_state_dict(torch.load(model_path, map_location=device), strict=False)
@@ -630,6 +634,33 @@ STGCN(
   )
   (fc): Linear(in_features=64, out_features=2, bias=True)
 )
+```
+
+### Fall Case
+```
+# =============================
+# Main Script
+# =============================
+from google.colab import files
+# Paths
+# Upload video
+uploaded = files.upload()
+video_path = list(uploaded.keys())[0]
+
+# Process the video and predict falls
+fall_results = predict_with_fallback(video_path, model, device)
+
+# Display the results
+print("Frame-by-Frame Pose Results:", results["Frame Results"])
+print("Overall Fall Detection Result:", results["Overall Result"])
+print("Annotated Video Saved at:", results["Video Path"])
+```
+
+#### Output
+
+### Fall Detected Case
+```
+
 
 Processing video with STGCN and MediaPipe fallback: falling_007.mp4
 Downloading model to /usr/local/lib/python3.10/dist-packages/mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite
