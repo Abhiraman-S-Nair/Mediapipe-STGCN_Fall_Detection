@@ -64,7 +64,7 @@ Refer to the [codebase file](Fall Detection using Mediapipe+STGCN.md) for detail
 ## **Links to Resources**
 - **Dataset**: [Download the Image Dataset](https://drive.google.com/drive/folders/1ixR5y90RfxJ_PdML1vh-DIF90QMAg74t?usp=sharing)  
 - **Colab Notebook**: [Run on Google Colab](https://colab.research.google.com/drive/1E-XdROrjfMnfx2f7ql1KIxQhDeyMKPul?usp=sharing)  
-- **Technical Specification Document**: [View Technical Document](https://docs.google.com/document/d/1dNpQLcUsvgv-MpNOYv0t84LydSMgpdId/edit?usp=sharing&ouid=113415972233706600255&rtpof=true&sd=true)  
+- **Technical Specification Document**: [View Technical Document](https://docs.google.com/document/d/1dNpQLcUsvgv-MpNOYv0t84LydSMgpdId/edit?usp=sharing&ouid=116045567244932468998&rtpof=true&sd=true)  
 - **Logical and Flow Diagrams**: [Download Diagrams](https://github.com/Abhiraman-S-Nair/YOLO-STGCN_Fall_Detection/tree/main/images)
 
 ---
