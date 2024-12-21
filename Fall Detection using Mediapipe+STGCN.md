@@ -810,6 +810,6 @@ No fall detected notification sent: SID SMe075e2713e7d395a80a12a61d4e84e79
 
 ![Alerts Received from Twilio via WhatsApp](images/twilio.jpeg)
 
-### 
+### Frame Saved to Drive
 ![Frame Saved to G-Drive](images/drive.jpeg)
 
