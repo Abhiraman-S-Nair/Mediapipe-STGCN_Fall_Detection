@@ -674,7 +674,7 @@ Annotated Video Saved at: output_annotated.mp4
 ```
 
 ##### Video
-[![Video Preview](videos/thumbnail(fall_case).jpg)](videos/output_annotated_(fall_case).mp4)
+[![Video Preview](videos/thumbnail(fall_case).jpg)](videos/output_annotated(fall_case).mp4)
 
 
 ### No Fall Case
@@ -715,7 +715,7 @@ Annotated Video Saved at: output_annotated.mp4
 ```
 
 ##### Video
-[![Video Preview](videos/thumbnail(no_fall_case).jpg)](videos/output_annotated_(no_fall_case).mp4)
+[![Video Preview](videos/thumbnail(no_fall_case).jpg)](videos/output_annotated(no_fall_case).mp4)
 
 
 
