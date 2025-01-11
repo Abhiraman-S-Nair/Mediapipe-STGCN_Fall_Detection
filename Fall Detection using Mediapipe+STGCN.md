@@ -657,6 +657,8 @@ print("Annotated Video Saved at:", results["Video Path"])
 ```
 
 #### Output
+
+##### Terminal
 ```
 No file chosen Upload widget is only available when the cell has been executed in the current browser session. Please rerun this cell to enable.
 Saving falling_007.mp4 to falling_007.mp4
@@ -670,6 +672,10 @@ Frame-by-Frame Pose Results: {0: 'Lying', 1: 'Lying', 2: 'Lying', 3: 'Lying', 4:
 Overall Fall Detection Result: Fall Detected
 Annotated Video Saved at: output_annotated.mp4
 ```
+
+##### Video
+[![Video Preview](videos/thumbnail(fall_case).jpg)](videos/output_annotated_(fall_case).mp4)
+
 
 ### No Fall Case
 ```python
@@ -692,6 +698,8 @@ print("Annotated Video Saved at:", results["Video Path"])
 ```
 
 #### Output
+
+##### Terminal
 ```
 No file chosen Upload widget is only available when the cell has been executed in the current browser session. Please rerun this cell to enable.
 Saving standing_004.mp4 to standing_004.mp4
@@ -705,6 +713,11 @@ Frame-by-Frame Pose Results: {0: 'Standing',  1: 'Standing',  2: 'Standing',  3:
 Overall Fall Detection Result: No Fall Detected
 Annotated Video Saved at: output_annotated.mp4
 ```
+
+##### Video
+[![Video Preview](videos/thumbnail(no_fall_case).jpg)](videos/output_annotated_(no_fall_case).mp4)
+
+
 
 
 # Twilio Integration with G-Drive
